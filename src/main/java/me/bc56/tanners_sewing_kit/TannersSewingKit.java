@@ -3,6 +3,7 @@ package me.bc56.tanners_sewing_kit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import me.bc56.tanners_sewing_kit.command.HomeCommand;
 import me.bc56.tanners_sewing_kit.command.TpAcceptCommand;
 import me.bc56.tanners_sewing_kit.command.TpHereCommand;
 import me.bc56.tanners_sewing_kit.command.TpaCommand;
@@ -22,6 +23,7 @@ public class TannersSewingKit implements DedicatedServerModInitializer {
             TpaCommand.register(dispatcher);
             TpHereCommand.register(dispatcher);
             TpAcceptCommand.register(dispatcher);
+            HomeCommand.register(dispatcher);
         });
     }
     
