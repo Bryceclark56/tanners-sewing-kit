@@ -1,0 +1,11 @@
+{
+    "required": true,
+    "minVersion": "0.8",
+    "package": "me.bc56.tanners_sewing_kit.mixin",
+    "server": [
+        "TeleportMixin"
+    ],
+    "injectors": {
+        "defaultRequire": 1
+    }
+}
