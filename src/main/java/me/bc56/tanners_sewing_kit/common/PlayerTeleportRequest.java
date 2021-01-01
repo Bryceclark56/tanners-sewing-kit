@@ -40,11 +40,21 @@ public class PlayerTeleportRequest {
     public void execute() {
         LocalDateTime currentDateTime = LocalDateTime.now();
         if (currentDateTime.isAfter(dateExpires)) {
-            // TODO: Inform requester of expiration
+            // Lazy expiration
+            
+            TeleportMixinAccess from2 = ((TeleportMixinAccess)from);
+            if (from2.getOutgoingRequest() == this) {
+                from2.setOutgoingRequest(null);
+            }
+
+            TeleportMixinAccess to2 = ((TeleportMixinAccess)to);
+            if (to2.getIncomingRequest() == this) {
+                to2.setIncomingRequest(null);
+            }
+
             return;
         }
 
-        BlockPos toPos = to.getBlockPos();
-        from.refreshPositionAfterTeleport(toPos.getX(), toPos.getY(), toPos.getZ());
+        from.teleport(to.getServerWorld(), to.getX(), to.getY(), to.getZ(), to.getYaw(1.0F), to.getPitch(1.0F));
     }
 }
