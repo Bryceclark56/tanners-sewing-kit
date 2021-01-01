@@ -8,14 +8,11 @@ import me.bc56.tanners_sewing_kit.command.HomeCommand;
 import me.bc56.tanners_sewing_kit.command.TpAcceptCommand;
 import me.bc56.tanners_sewing_kit.command.TpHereCommand;
 import me.bc56.tanners_sewing_kit.command.TpaCommand;
-import me.bc56.tanners_sewing_kit.config.TannerKitConfig;
 import net.fabricmc.api.DedicatedServerModInitializer;
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
 
 public class TannersSewingKit implements DedicatedServerModInitializer {
     public static Logger logger = LogManager.getLogger();
-
-    public static TannerKitConfig config;
 
     @Override
     public void onInitializeServer() {
