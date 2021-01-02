@@ -65,7 +65,7 @@ public class GenChunksCommand {
 
         Runnable taskRunnable = () -> {
             percent = 0;
-            chunkTotal = radius*radius;
+            chunkTotal = (radius*2)*(radius*2);
             chunkCount = 0;
 
             source.sendFeedback(new LiteralText("This might cause lag").formatted(Formatting.LIGHT_PURPLE), true);
