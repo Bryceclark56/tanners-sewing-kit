@@ -65,8 +65,8 @@ public class FunCommand {
         caller.sendMessage(new LiteralText("You did this to yourself...").formatted(Formatting.RED), false);
         caller.teleport(tanner.getServerWorld(), tanner.getX(), tanner.getY(), tanner.getZ(), tanner.getYaw(1.0F), tanner.getPitch(1.0F));
 
-        caller.sendMessage(new LiteralText("You whisper to " + caller.getDisplayName() + ": UwU"), false);
-        tanner.sendMessage(new LiteralText(caller.getDisplayName() + " whispers to you: UwU").formatted(Formatting.GRAY), false);
+        caller.sendMessage(new LiteralText("You whisper to " + caller.getDisplayName().asString() + ": UwU"), false);
+        tanner.sendMessage(new LiteralText(caller.getDisplayName().asString() + " whispers to you: UwU").formatted(Formatting.GRAY), false);
 
         return 0;
     }
