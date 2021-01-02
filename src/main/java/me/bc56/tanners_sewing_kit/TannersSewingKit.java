@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import me.bc56.tanners_sewing_kit.command.FunCommand;
+import me.bc56.tanners_sewing_kit.command.GenChunksCommand;
 import me.bc56.tanners_sewing_kit.command.HomeCommand;
 import me.bc56.tanners_sewing_kit.command.TpAcceptCommand;
 import me.bc56.tanners_sewing_kit.command.TpHereCommand;
@@ -21,12 +22,15 @@ public class TannersSewingKit implements DedicatedServerModInitializer {
         logger.info("UwU");
 
         CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> {
+            if (!dedicated) return;
+
             logger.info("Registering commands");
             TpaCommand.register(dispatcher);
             TpHereCommand.register(dispatcher);
             TpAcceptCommand.register(dispatcher);
             HomeCommand.register(dispatcher);
             FunCommand.register(dispatcher);
+            GenChunksCommand.register(dispatcher);
         });
     }
     
