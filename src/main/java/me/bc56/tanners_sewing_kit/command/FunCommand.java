@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit;
 public class FunCommand {
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher) {
         dispatcher.register(literal("fun")
-            .then(literal("hehe").executes(FunCommand::fakeStop))
+            //.then(literal("hehe").executes(FunCommand::fakeStop))
             .then(literal("tanner").executes(FunCommand::sendToTanner))
             .executes(FunCommand::baseFun));
     }
@@ -41,8 +41,9 @@ public class FunCommand {
         randomPlayer.sendMessage(
                 new LiteralText("Server is restarting in 5 seconds").formatted(Formatting.LIGHT_PURPLE), false);
 
+        
         try {
-            TimeUnit.SECONDS.sleep(5);
+            TimeUnit.SECONDS.sleep(5); // TODO: Move off of main thread
         } catch (InterruptedException e) {
             throw new SimpleCommandExceptionType(new LiteralText("Something went wrong while pranking a player")).create();
         }
@@ -58,15 +59,13 @@ public class FunCommand {
 
         ServerPlayerEntity tanner = server.getPlayerManager().getPlayer(UUID.fromString("fc0e539f-769d-478f-9d97-aa0fe599006d"));
 
-        if (tanner == null) {
-            return 0;
-        }
-        
-        caller.sendMessage(new LiteralText("You did this to yourself...").formatted(Formatting.RED), false);
-        caller.teleport(tanner.getServerWorld(), tanner.getX(), tanner.getY(), tanner.getZ(), tanner.getYaw(1.0F), tanner.getPitch(1.0F));
+        if (tanner != null) {
+            caller.sendMessage(new LiteralText("You did this to yourself...").formatted(Formatting.RED), false);
+            caller.teleport(tanner.getServerWorld(), tanner.getX(), tanner.getY(), tanner.getZ(), tanner.getYaw(1.0F), tanner.getPitch(1.0F));
 
-        caller.sendMessage(new LiteralText("You whisper to " + caller.getDisplayName().asString() + ": UwU"), false);
-        tanner.sendMessage(new LiteralText(caller.getDisplayName().asString() + " whispers to you: UwU").formatted(Formatting.GRAY), false);
+            caller.sendMessage(new LiteralText("You whisper to " + tanner.getDisplayName().asString() + ": UwU"), false);
+            tanner.sendMessage(new LiteralText(caller.getDisplayName().asString() + " whispers to you: UwU").formatted(Formatting.GRAY), false);
+        }
 
         return 0;
     }
