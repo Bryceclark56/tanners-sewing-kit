@@ -13,7 +13,6 @@ import me.bc56.tanners_sewing_kit.TannersSewingKit;
 import me.bc56.tanners_sewing_kit.common.HomeManager;
 import me.bc56.tanners_sewing_kit.common.HomeMixinAccess;
 import me.bc56.tanners_sewing_kit.common.PlayerHome;
-import me.bc56.tanners_sewing_kit.config.TannerKitConfig;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
