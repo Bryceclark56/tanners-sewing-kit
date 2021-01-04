@@ -1,8 +1,9 @@
 package me.bc56.tanners_sewing_kit.common;
 
-public interface HomeMixinAccess {
-    public void setHome(PlayerHome position);
-    public PlayerHome getHome();
+import java.util.Map;
 
-    public int teleportToHome();
+public interface HomeMixinAccess {
+    public Map<String, PlayerHome> getHomes();
+    public void addHome(PlayerHome home, String name);
+    public PlayerHome getHome(String name);
 }
