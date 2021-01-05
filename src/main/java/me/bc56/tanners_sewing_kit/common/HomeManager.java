@@ -37,6 +37,7 @@ public class HomeManager {
 
     public static void setNewHome(ServerPlayerEntity player, String homeName) throws CommandSyntaxException {
         Map<String, PlayerHome> homes = ((HomeMixinAccess)player).getHomes();
+        homeName = homeName.toLowerCase();
 
         if (((HomeMixinAccess)player).getHomes().size() >= HOME_LIMIT && !homes.containsKey(homeName)) {
             throw new SimpleCommandExceptionType(new LiteralText("You have reached the limit of how many homes you may have. (" + HOME_LIMIT + ")").formatted(Formatting.RED)).create();
@@ -61,6 +62,8 @@ public class HomeManager {
     }
 
     public static void sendToHome(ServerPlayerEntity player, String homeName) {
+        homeName = homeName.toLowerCase();
+
         PlayerHome home = ((HomeMixinAccess) player).getHome(homeName);
 
         if (home == null) return;
@@ -75,6 +78,7 @@ public class HomeManager {
 
     public static void removeNamedHome(ServerPlayerEntity player, String homeName) {
         Map<String, PlayerHome> homes = ((HomeMixinAccess) player).getHomes();
+        homeName = homeName.toLowerCase();
 
         if (!homes.containsKey(homeName)) return;
 
