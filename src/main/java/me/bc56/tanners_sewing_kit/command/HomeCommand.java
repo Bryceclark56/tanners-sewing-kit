@@ -3,6 +3,7 @@ package me.bc56.tanners_sewing_kit.command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.tree.LiteralCommandNode;
 
 import me.bc56.tanners_sewing_kit.homes.HomeManager;
 import me.bc56.tanners_sewing_kit.homes.HomeMixinAccess;
@@ -30,29 +31,37 @@ import static com.mojang.brigadier.arguments.StringArgumentType.getString;
 
 public class HomeCommand {
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher) {
-        dispatcher.register(literal("sethome")
+        LiteralCommandNode<ServerCommandSource> setHome = dispatcher.register(literal("sethome")
             .then(argument("name", word())
                 .executes(HomeCommand::setNamedHome)
             )
             .executes(HomeCommand::setHome)
         );
 
-        dispatcher.register(literal("delhome")
+        LiteralCommandNode<ServerCommandSource> delHome = dispatcher.register(literal("delhome")
             .then(argument("name", word())
                 .executes(HomeCommand::removeNamedHome)
             )
             .executes(HomeCommand::removeHome)
         );
 
-        dispatcher.register(literal("home")
+        LiteralCommandNode<ServerCommandSource> goToHome = dispatcher.register(literal("home")
             .then(argument("name", word())
                 .executes(HomeCommand::goToNamedHome)
             )
             .executes(HomeCommand::goToHome)
         );
 
-        dispatcher.register(literal("listhomes")
+        LiteralCommandNode<ServerCommandSource> listHomes = dispatcher.register(literal("listhomes")
             .executes(HomeCommand::listHomes)
+        );
+
+        dispatcher.register(literal("homes")
+            .then(literal("list").redirect(listHomes))
+            .then(literal("set").redirect(setHome))
+            .then(literal("remove").redirect(delHome))
+            .then(literal("visit").redirect(goToHome))
+            .redirect(listHomes)
         );
     }
 
