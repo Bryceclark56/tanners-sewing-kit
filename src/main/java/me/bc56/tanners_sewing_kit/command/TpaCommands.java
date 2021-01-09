@@ -5,8 +5,8 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 
-import me.bc56.tanners_sewing_kit.common.PlayerTeleportRequest;
-import me.bc56.tanners_sewing_kit.common.TeleportMixinAccess;
+import me.bc56.tanners_sewing_kit.tpa.PlayerTeleportRequest;
+import me.bc56.tanners_sewing_kit.tpa.TeleportMixinAccess;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 

@@ -11,9 +11,9 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import me.bc56.tanners_sewing_kit.TannersSewingKit;
-import me.bc56.tanners_sewing_kit.common.HomeManager;
-import me.bc56.tanners_sewing_kit.common.HomeMixinAccess;
-import me.bc56.tanners_sewing_kit.common.PlayerHome;
+import me.bc56.tanners_sewing_kit.homes.HomeManager;
+import me.bc56.tanners_sewing_kit.homes.HomeMixinAccess;
+import me.bc56.tanners_sewing_kit.homes.PlayerHome;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;

@@ -1,4 +1,4 @@
-package me.bc56.tanners_sewing_kit.common;
+package me.bc56.tanners_sewing_kit.homes;
 
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;

@@ -3,8 +3,8 @@ package me.bc56.tanners_sewing_kit.mixin;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 
-import me.bc56.tanners_sewing_kit.common.PlayerTeleportRequest;
-import me.bc56.tanners_sewing_kit.common.TeleportMixinAccess;
+import me.bc56.tanners_sewing_kit.tpa.PlayerTeleportRequest;
+import me.bc56.tanners_sewing_kit.tpa.TeleportMixinAccess;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 @Mixin(ServerPlayerEntity.class)

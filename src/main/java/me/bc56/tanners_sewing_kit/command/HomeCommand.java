@@ -4,9 +4,9 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 
-import me.bc56.tanners_sewing_kit.common.HomeManager;
-import me.bc56.tanners_sewing_kit.common.HomeMixinAccess;
-import me.bc56.tanners_sewing_kit.common.PlayerHome;
+import me.bc56.tanners_sewing_kit.homes.HomeManager;
+import me.bc56.tanners_sewing_kit.homes.HomeMixinAccess;
+import me.bc56.tanners_sewing_kit.homes.PlayerHome;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.ClickEvent;

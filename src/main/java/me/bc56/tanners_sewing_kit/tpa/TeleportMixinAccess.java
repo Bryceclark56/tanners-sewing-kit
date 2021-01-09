@@ -1,4 +1,4 @@
-package me.bc56.tanners_sewing_kit.common;
+package me.bc56.tanners_sewing_kit.tpa;
 
 public interface TeleportMixinAccess {
     PlayerTeleportRequest getIncomingRequest();
