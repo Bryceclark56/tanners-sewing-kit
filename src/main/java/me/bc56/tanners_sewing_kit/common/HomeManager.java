@@ -26,8 +26,11 @@ import me.bc56.tanners_sewing_kit.ThreadManager;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ChunkTicketType;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
 
 public class HomeManager {
     public static final Logger LOGGER = LogManager.getLogger();
@@ -100,6 +103,10 @@ public class HomeManager {
 
         if (home == null) return;
 
+        // Ensure chunk is loaded
+        ChunkPos chunkPos = new ChunkPos(new BlockPos(home.x, home.y, home.z));
+        home.dimension.getChunkManager().addTicket(ChunkTicketType.POST_TELEPORT, chunkPos, 1, player.getEntityId());
+        
         player.teleport(home.dimension, home.x, home.y, home.z, home.yaw, home.pitch);
         player.networkHandler.syncWithPlayerPosition(); // Not sure why this is needed, but it prevents a warning in the console
     }
