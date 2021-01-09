@@ -9,12 +9,20 @@ import me.bc56.tanners_sewing_kit.common.HomeMixinAccess;
 import me.bc56.tanners_sewing_kit.common.PlayerHome;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.text.ClickEvent;
+import net.minecraft.text.HoverEvent;
 import net.minecraft.text.LiteralText;
+import net.minecraft.text.MutableText;
+import net.minecraft.text.Style;
+import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
 import static net.minecraft.server.command.CommandManager.literal;
 
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static net.minecraft.server.command.CommandManager.argument;
 import static com.mojang.brigadier.arguments.StringArgumentType.word;
@@ -58,14 +66,30 @@ public class HomeCommand {
             return 0;
         }
 
-        StringBuilder homesList = new StringBuilder();
-        homes.keySet().forEach(name -> {
-            homesList.append(' ').append(name).append(',');
-        });
-        homesList.deleteCharAt(homesList.length()-1);
+        MutableText finalMessage = new LiteralText("Homes: ").formatted(Formatting.GOLD);
 
-        player.sendMessage(new LiteralText("Homes:").formatted(Formatting.GOLD)
-                    .append(new LiteralText(homesList.toString()).formatted(Formatting.WHITE)), false);
+        List<MutableText> homesList = homes.keySet().stream().map(homeName -> 
+            new LiteralText(homeName)
+                .setStyle(Style.EMPTY
+                    .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new LiteralText("Teleport to: " + homeName)))
+                    .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/home " + homeName))
+                    .withColor(Formatting.WHITE)
+                )
+        ).collect(Collectors.toList());
+
+        Iterator<MutableText> homesIter = homesList.iterator();
+
+        Text separator = new LiteralText(", ");
+        while(homesIter.hasNext()) {
+            MutableText homeText = homesIter.next();
+            finalMessage.append(homeText);
+
+            if (homesIter.hasNext()) {
+                finalMessage.append(separator);
+            }
+        }
+
+        player.sendMessage(finalMessage, false);
 
         return 0;
     }
