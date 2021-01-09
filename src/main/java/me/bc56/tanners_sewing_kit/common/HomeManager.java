@@ -7,8 +7,11 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
-
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -16,19 +19,48 @@ import com.google.gson.stream.JsonReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import me.bc56.tanners_sewing_kit.ThreadManager;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Formatting;
 
 public class HomeManager {
+    public static final Logger LOGGER = LogManager.getLogger();
     public static final int HOME_LIMIT = 3;
     public static final String DEFAULT_HOME_NAME = "home";
 
-    public static MinecraftServer server;
+    public static final Map<ServerPlayerEntity, ReentrantReadWriteLock> saveLockMap = new HashMap<>(); // Default
+                                                                                                       // capacity of 16
 
-    public static void initHomeManager(MinecraftServer server) {
-        HomeManager.server = server;
+    public static void initialize() {
+        ServerPlayConnectionEvents.INIT.register((handler, server) -> {
+            ServerPlayerEntity player = handler.player;
+            saveLockMap.put(player, new ReentrantReadWriteLock());
+
+            Map<String, PlayerHome> homes = null;
+            try {
+                Future<Map<String, PlayerHome>> future = ThreadManager.EXECUTOR.submit(() -> readHomes(player));
+                homes = future.get();
+            } catch (InterruptedException | ExecutionException e) {
+                LOGGER.error("Unable to load homes from file of player: {}", player.getName().asString(), e);
+                return;
+            }
+
+            if (homes == null) return; // TODO: Better confirmation of no pre-existing homes
+
+            ((HomeMixinAccess) player).getHomes().putAll(homes);
+        });
+
+        ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
+            ServerPlayerEntity player = handler.player;
+
+            saveLockMap.remove(player);
+        });
     }
 
     public static void setNewHome(ServerPlayerEntity player) throws CommandSyntaxException {
@@ -54,7 +86,7 @@ public class HomeManager {
             player.sendMessage(new LiteralText("Home ").formatted(Formatting.GOLD).append(new LiteralText(homeName).formatted(Formatting.RESET).formatted(Formatting.WHITE)).append(new LiteralText(" set").formatted(Formatting.GOLD)), false);
         }
 
-        writeHomes(player); //TODO: Determine if this is too often
+        syncHomesFile(player);
     }
 
     public static void sendToHome(ServerPlayerEntity player) {
@@ -83,13 +115,26 @@ public class HomeManager {
         if (!homes.containsKey(homeName)) return;
 
         homes.remove(homeName);
-        writeHomes(player);
+
+
+        syncHomesFile(player);
+    }
+
+    // Only useful for writes
+    public static void syncHomesFile(ServerPlayerEntity player) {
+        ThreadManager.EXECUTOR.submit(() -> writeHomes(player)); //TODO: Determine if this is too often
     }
 
     public static void writeHomes(ServerPlayerEntity player) {
+        ReentrantReadWriteLock lock = saveLockMap.get(player);
+        lock.writeLock().lock();
+
         Map<String, PlayerHome> homes = ((HomeMixinAccess) player).getHomes();
 
-        if (homes == null || homes.isEmpty()) return;
+        if (homes == null || homes.isEmpty()) {
+            lock.writeLock().unlock();
+            return;
+        };
 
         File saveFile = getSaveFile(player);
 
@@ -97,6 +142,8 @@ public class HomeManager {
             saveFile.createNewFile();
         } catch (IOException e) {
             e.printStackTrace();
+            lock.writeLock().unlock();
+            return;
         }
 
         Gson gson = new GsonBuilder()
@@ -111,14 +158,20 @@ public class HomeManager {
             writer.write(jsonEncoded);
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            lock.writeLock().unlock();
         }
     }
 
     public static Map<String, PlayerHome> readHomes(ServerPlayerEntity player) {
+        ReentrantReadWriteLock lock = saveLockMap.get(player);
+        lock.readLock().lock();
+
         File saveFile = getSaveFile(player);
 
         if (!saveFile.exists()) {
-            return null;
+            lock.readLock().unlock();
+            return null; // TODO: Throw custom exception instead
         }
 
         FileReader reader = null;
@@ -128,6 +181,7 @@ public class HomeManager {
             // Hopefully this doesn't happen
             e.printStackTrace();
 
+            lock.readLock().unlock();
             return null;
         }
 
@@ -135,12 +189,16 @@ public class HomeManager {
             .registerTypeAdapter(PlayerHome.class, new PlayerHomeTypeAdapter())
             .create();
 
-        Type homeMapType = new TypeToken<HashMap<String, PlayerHome>>(){}.getType();
+        Type homeMapType = new TypeToken<LinkedHashMap<String, PlayerHome>>(){}.getType();
 
-        return gson.fromJson(new JsonReader(reader), homeMapType);
+        Map<String, PlayerHome> map = gson.fromJson(new JsonReader(reader), homeMapType);
+        lock.readLock().unlock();
+        return map;
     }
 
     public static File getSaveFile(ServerPlayerEntity player) {
+        MinecraftServer server = player.getServer();
+
         // TODO: Grab actual world folder name
         File savePath = server.getFile("world/playerdata/playerhomes/");
         savePath.mkdirs(); // Ensures folders exist to prevent exception

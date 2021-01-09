@@ -1,7 +1,8 @@
 package me.bc56.tanners_sewing_kit.mixin;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -25,7 +26,7 @@ import net.minecraft.world.World;
 @Mixin(ServerPlayerEntity.class)
 public class PlayerHomeMixin implements HomeMixinAccess {
     @Unique
-    private Map<String, PlayerHome> homes = new HashMap<>();
+    private Map<String, PlayerHome> homes = new LinkedHashMap<>(HomeManager.HOME_LIMIT);
 
     @Override
     @Unique
@@ -48,7 +49,16 @@ public class PlayerHomeMixin implements HomeMixinAccess {
     @Inject(method = "copyFrom", at = @At("RETURN"))
     public void copyFrom(ServerPlayerEntity oldPlayer, boolean alive, CallbackInfo ci) {
         this.homes = ((HomeMixinAccess) oldPlayer).getHomes();
+
+        // Transfer homes save file lock to new player object
+        ReentrantReadWriteLock lock = HomeManager.saveLockMap.remove(oldPlayer);
+        if (lock == null) {
+            lock = new ReentrantReadWriteLock();
+        }
+        HomeManager.saveLockMap.put((ServerPlayerEntity)((Object)this), lock);
     }
+
+
 
     // If an old-style home exists, load it for conversion
     // TODO: Remove this on February 1st, 2021

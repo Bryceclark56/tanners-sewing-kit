@@ -6,6 +6,7 @@ import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
+import me.bc56.tanners_sewing_kit.TannersSewingKit;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
@@ -37,7 +38,7 @@ public class PlayerHomeTypeAdapter extends TypeAdapter<PlayerHome> {
         in.beginObject();
         in.nextName();
         RegistryKey<World> dimKey = RegistryKey.of(Registry.DIMENSION, new Identifier(in.nextString()));
-        dimension = HomeManager.server.getWorld(dimKey);
+        dimension = TannersSewingKit.server.getWorld(dimKey);
 
         in.nextName();
         in.beginArray();
