@@ -9,16 +9,11 @@ public class PlayerTeleportRequest {
     ServerPlayerEntity from;
     ServerPlayerEntity to;
 
-    LocalDateTime dateRequested;
-    Duration timeout;
     LocalDateTime dateExpires;
 
     public PlayerTeleportRequest(ServerPlayerEntity from, ServerPlayerEntity to, LocalDateTime dateRequested, Duration timeout) {
         this.from = from;
         this.to = to;
-
-        this.dateRequested = dateRequested;
-        this.timeout = timeout;
 
         dateExpires = dateRequested.plus(timeout);
     }
