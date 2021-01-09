@@ -2,53 +2,98 @@ package me.bc56.tanners_sewing_kit.common;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
+import me.bc56.tanners_sewing_kit.TannersSewingKit;
+import net.minecraft.server.PlayerManager;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.text.ClickEvent;
+import net.minecraft.text.HoverEvent;
+import net.minecraft.text.LiteralText;
+import net.minecraft.text.MutableText;
+import net.minecraft.text.Style;
+import net.minecraft.util.Formatting;
 
 public class PlayerTeleportRequest {
-    ServerPlayerEntity from;
-    ServerPlayerEntity to;
+    public static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(20);
+
+    public UUID from;
+    public UUID to;
 
     LocalDateTime dateExpires;
 
-    public PlayerTeleportRequest(ServerPlayerEntity from, ServerPlayerEntity to, LocalDateTime dateRequested, Duration timeout) {
-        this.from = from;
-        this.to = to;
+    public PlayerTeleportRequest(ServerPlayerEntity from, ServerPlayerEntity to, Duration timeout) {
+        this.from = from.getUuid();
+        this.to = to.getUuid();
 
-        dateExpires = dateRequested.plus(timeout);
+        dateExpires = LocalDateTime.now().plus(timeout);
     }
 
-    public static PlayerTeleportRequest create(ServerPlayerEntity from, ServerPlayerEntity to) {
-        return new PlayerTeleportRequest(from, to, LocalDateTime.now(), Duration.ofSeconds(20)); // TODO: Get timeout from mod config
+    public static void newTpaHere(ServerPlayerEntity caller, ServerPlayerEntity target) {
+        PlayerTeleportRequest request = new PlayerTeleportRequest(target, caller, DEFAULT_TIMEOUT);
+
+        ((TeleportMixinAccess)caller).setOutgoingRequest(request);
+        ((TeleportMixinAccess)target).setIncomingRequest(request);
+
+        sendConfirmation(caller, target);
+        sendTpaHereNotice(caller, target);
     }
 
-    public static PlayerTeleportRequest createAndSet(ServerPlayerEntity from, ServerPlayerEntity to) {
-        PlayerTeleportRequest request = create(from, to);
+    public static void newTpa(ServerPlayerEntity caller, ServerPlayerEntity target) {
+        PlayerTeleportRequest request = new PlayerTeleportRequest(target, caller, DEFAULT_TIMEOUT);
 
-        ((TeleportMixinAccess) from).setOutgoingRequest(request);
-        ((TeleportMixinAccess) to).setIncomingRequest(request);
+        ((TeleportMixinAccess)caller).setOutgoingRequest(request);
+        ((TeleportMixinAccess)target).setIncomingRequest(request);
 
-        return request;
+        sendConfirmation(caller, target);
+        sendTpaNotice(caller, target);
     }
 
     public void execute() {
-        LocalDateTime currentDateTime = LocalDateTime.now();
-        if (currentDateTime.isAfter(dateExpires)) {
-            // Lazy expiration
-            
-            TeleportMixinAccess from2 = ((TeleportMixinAccess)from);
-            if (from2.getOutgoingRequest() == this) {
-                from2.setOutgoingRequest(null);
-            }
+        if (LocalDateTime.now().isAfter(dateExpires)) return; //TODO: Better way of expiration
 
-            TeleportMixinAccess to2 = ((TeleportMixinAccess)to);
-            if (to2.getIncomingRequest() == this) {
-                to2.setIncomingRequest(null);
-            }
+        PlayerManager playerManager = TannersSewingKit.server.getPlayerManager();
+        ServerPlayerEntity fromPlayer = playerManager.getPlayer(from);
+        ServerPlayerEntity toPlayer = playerManager.getPlayer(to);
 
-            return;
-        }
+        fromPlayer.sendMessage(new LiteralText("Teleporting...").formatted(Formatting.GOLD), false);
 
-        from.teleport(to.getServerWorld(), to.getX(), to.getY(), to.getZ(), to.getYaw(1.0F), to.getPitch(1.0F));
+        fromPlayer.teleport(toPlayer.getServerWorld(), toPlayer.getX(), toPlayer.getY(), toPlayer.getZ(), toPlayer.getYaw(1.0F), toPlayer.getPitch(1.0F));
+    }
+
+    private static void sendConfirmation(ServerPlayerEntity caller, ServerPlayerEntity target) {
+        // Confirm with caller
+        MutableText requestSent = new LiteralText("Sending request to ").formatted(Formatting.GOLD);
+        MutableText targetText = new LiteralText(target.getName().getString()).formatted(Formatting.AQUA);
+
+        caller.sendMessage(requestSent.append(targetText), false);
+    }
+
+    private static void sendTpaNotice(ServerPlayerEntity caller, ServerPlayerEntity target) {
+        // Notify target
+        MutableText callerText = new LiteralText(caller.getName().getString()).formatted(Formatting.AQUA);
+        MutableText requestReceived = new LiteralText(" wishes to teleport to you").formatted(Formatting.GOLD);
+
+        target.sendMessage(callerText.append(requestReceived), false);
+        sendAcceptPrompt(target);
+    }
+
+    private static void sendTpaHereNotice(ServerPlayerEntity caller, ServerPlayerEntity target) {
+        // Notify target
+        MutableText callerText = new LiteralText(caller.getName().getString()).formatted(Formatting.AQUA);
+        MutableText requestReceived = new LiteralText(" wishes for you to teleport to them").formatted(Formatting.GOLD);
+
+        target.sendMessage(callerText.append(requestReceived), false);
+        sendAcceptPrompt(target);
+    }
+
+    private static void sendAcceptPrompt(ServerPlayerEntity target) {
+        ClickEvent acceptClickEvent = new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/tpaccept");
+        HoverEvent acceptHoverEvent = new HoverEvent(HoverEvent.Action.SHOW_TEXT, new LiteralText("Click here to accept"));
+
+        MutableText acceptCommandText = new LiteralText("/tpaccept").setStyle(Style.EMPTY.withClickEvent(acceptClickEvent).withHoverEvent(acceptHoverEvent).withColor(Formatting.LIGHT_PURPLE));
+        MutableText acceptPromptText = new LiteralText("Type ").formatted(Formatting.GOLD).append(acceptCommandText).append(new LiteralText(" to accept the request").formatted(Formatting.GOLD));
+
+        target.sendMessage(acceptPromptText, false);
     }
 }

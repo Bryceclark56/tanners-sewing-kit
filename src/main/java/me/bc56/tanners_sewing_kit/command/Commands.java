@@ -16,9 +16,7 @@ public class Commands {
             };
 
             LOGGER.debug("Registering commands");
-            TpaCommand.register(dispatcher);
-            TpHereCommand.register(dispatcher);
-            TpAcceptCommand.register(dispatcher);
+            TpaCommands.register(dispatcher);
             HomeCommand.register(dispatcher);
             FunCommand.register(dispatcher);
             GenChunksCommand.register(dispatcher);
