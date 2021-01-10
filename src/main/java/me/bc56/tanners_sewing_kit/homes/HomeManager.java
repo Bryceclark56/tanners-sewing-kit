@@ -23,6 +23,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import me.bc56.tanners_sewing_kit.ThreadManager;
+import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -63,6 +64,19 @@ public class HomeManager {
             ServerPlayerEntity player = handler.player;
 
             saveLockMap.remove(player);
+        });
+
+        ServerPlayerEvents.COPY_FROM.register((oldPlayer, newPlayer, alive) -> {
+            // Transfer homes to new object
+            Map<String, PlayerHome> homes = ((HomeMixinAccess) newPlayer).getHomes();
+            homes.putAll(((HomeMixinAccess) oldPlayer).getHomes());
+
+            // Transfer homes save file lock to new player object
+            ReentrantReadWriteLock lock = saveLockMap.remove(oldPlayer);
+            if (lock == null) {
+                lock = new ReentrantReadWriteLock();
+            }
+            saveLockMap.put(newPlayer, lock);
         });
     }
 
