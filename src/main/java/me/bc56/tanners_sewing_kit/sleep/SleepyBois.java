@@ -63,8 +63,6 @@ public class SleepyBois {
                     p.wakeUp();
                 });
 
-                TannersSewingKit.LOGGER.info("What is going on here?");
-
                 if (world.getGameRules().getBoolean(GameRules.DO_WEATHER_CYCLE)) {
                     ((ServerWorldSleepMixin)world).invokeResetWeather();
                 }
