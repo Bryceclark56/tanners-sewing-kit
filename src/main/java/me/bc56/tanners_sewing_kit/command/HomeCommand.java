@@ -31,37 +31,63 @@ import static com.mojang.brigadier.arguments.StringArgumentType.getString;
 
 public class HomeCommand {
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher) {
-        LiteralCommandNode<ServerCommandSource> setHome = dispatcher.register(literal("sethome")
+        LiteralCommandNode<ServerCommandSource> setHome = literal("set")
+            .then(argument("name", word())
+                .executes(HomeCommand::setNamedHome)
+            )
+            .executes(HomeCommand::setHome)
+            .build();
+
+        LiteralCommandNode<ServerCommandSource> removeHome = literal("remove")
+            .then(argument("name", word())
+                .executes(HomeCommand::removeNamedHome)
+            )
+            .executes(HomeCommand::removeHome)
+            .build();
+
+        LiteralCommandNode<ServerCommandSource> visitHome = literal("visit")
+            .then(argument("name", word())
+                .executes(HomeCommand::goToNamedHome)
+            )
+            .executes(HomeCommand::goToHome)
+            .build();
+
+        LiteralCommandNode<ServerCommandSource> listHomes = literal("list")
+            .executes(HomeCommand::listHomes)
+            .build();
+
+        LiteralCommandNode homes = dispatcher.register(literal("homes").executes(HomeCommand::listHomes));
+
+        homes.addChild(setHome);
+        homes.addChild(removeHome);
+        homes.addChild(visitHome);
+        homes.addChild(listHomes);
+
+        
+        // Old home commands
+        dispatcher.register(literal("sethome")
             .then(argument("name", word())
                 .executes(HomeCommand::setNamedHome)
             )
             .executes(HomeCommand::setHome)
         );
 
-        LiteralCommandNode<ServerCommandSource> delHome = dispatcher.register(literal("delhome")
+        dispatcher.register(literal("delhome")
             .then(argument("name", word())
                 .executes(HomeCommand::removeNamedHome)
             )
             .executes(HomeCommand::removeHome)
         );
 
-        LiteralCommandNode<ServerCommandSource> goToHome = dispatcher.register(literal("home")
+        dispatcher.register(literal("home")
             .then(argument("name", word())
                 .executes(HomeCommand::goToNamedHome)
             )
             .executes(HomeCommand::goToHome)
         );
 
-        LiteralCommandNode<ServerCommandSource> listHomes = dispatcher.register(literal("listhomes")
+        dispatcher.register(literal("listhomes")
             .executes(HomeCommand::listHomes)
-        );
-
-        dispatcher.register(literal("homes")
-            .then(literal("list").redirect(listHomes))
-            .then(literal("set").redirect(setHome))
-            .then(literal("remove").redirect(delHome))
-            .then(literal("visit").redirect(goToHome))
-            .redirect(listHomes)
         );
     }
 
