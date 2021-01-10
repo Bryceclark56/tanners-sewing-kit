@@ -8,8 +8,11 @@ import me.bc56.tanners_sewing_kit.common.PlayerLocation;
 import me.bc56.tanners_sewing_kit.tpa.TeleportMixinAccess;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ChunkTicketType;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
 
 import static net.minecraft.server.command.CommandManager.literal;
 
@@ -27,7 +30,9 @@ public class BackCommand {
             sendFailureMessage(player);
             return 0;
         }
-
+        
+        ChunkPos chunkPos = new ChunkPos(new BlockPos(lastPos.x, lastPos.y, lastPos.z));
+        lastPos.dimension.getChunkManager().addTicket(ChunkTicketType.POST_TELEPORT, chunkPos, 1, player.getEntityId());
         player.teleport(lastPos.dimension, lastPos.x, lastPos.y, lastPos.z, player.getYaw(1.0F), player.getPitch(1.0F));
 
         ((TeleportMixinAccess)player).setLastLocation(null);
