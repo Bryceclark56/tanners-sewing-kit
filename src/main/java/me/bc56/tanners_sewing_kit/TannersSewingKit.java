@@ -5,6 +5,7 @@ import org.apache.logging.log4j.Logger;
 
 import me.bc56.tanners_sewing_kit.command.Commands;
 import me.bc56.tanners_sewing_kit.homes.HomeManager;
+import me.bc56.tanners_sewing_kit.sleep.SleepyBois;
 import net.fabricmc.api.DedicatedServerModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.minecraft.server.MinecraftServer;
@@ -25,6 +26,7 @@ public class TannersSewingKit implements DedicatedServerModInitializer {
         });
 
         HomeManager.initialize();
+        SleepyBois.initialize();
 
         Commands.register();
     }

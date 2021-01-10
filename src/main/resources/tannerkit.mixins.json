@@ -4,7 +4,8 @@
     "package": "me.bc56.tanners_sewing_kit.mixin",
     "server": [
         "TeleportMixin",
-        "PlayerHomeMixin"
+        "PlayerHomeMixin",
+        "ServerWorldSleepMixin"
     ],
     "injectors": {
         "defaultRequire": 1
