@@ -1,5 +1,7 @@
 package me.bc56.tanners_sewing_kit;
 
+import java.util.concurrent.TimeUnit;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -26,6 +28,15 @@ public class TannersSewingKit implements DedicatedServerModInitializer {
 
         ServerLifecycleEvents.SERVER_STARTING.register(server -> {
             TannersSewingKit.server = server;
+        });
+
+        ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
+            try {
+                ThreadManager.EXECUTOR.awaitTermination(10, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                LOGGER.error("Problem while shutting down executor", e);
+                ThreadManager.EXECUTOR.shutdown();
+            }
         });
 
         ServerPlayerEvents.AFTER_RESPAWN.register((oldPlayer, newPlayer, alive) -> {
