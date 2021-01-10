@@ -16,7 +16,9 @@ public class ThreadManager {
 
         @Override
         public Thread newThread(Runnable r) {
-            return new Thread(r, prefix + threadCount.incrementAndGet());
+            Thread t = new Thread(r, prefix + threadCount.incrementAndGet());
+            t.setDaemon(true);
+            return t;
         }
 
     }
