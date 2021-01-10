@@ -23,6 +23,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import me.bc56.tanners_sewing_kit.ThreadManager;
+import me.bc56.tanners_sewing_kit.command.BackCommand;
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.server.MinecraftServer;
@@ -116,6 +117,8 @@ public class HomeManager {
         PlayerHome home = ((HomeMixinAccess) player).getHome(homeName);
 
         if (home == null) return;
+
+        BackCommand.setLastLocation(player);
 
         // Ensure chunk is loaded
         ChunkPos chunkPos = new ChunkPos(new BlockPos(home.x, home.y, home.z));

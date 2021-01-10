@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 import me.bc56.tanners_sewing_kit.TannersSewingKit;
+import me.bc56.tanners_sewing_kit.command.BackCommand;
 import net.minecraft.server.PlayerManager;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.ClickEvent;
@@ -55,6 +56,8 @@ public class PlayerTeleportRequest {
         PlayerManager playerManager = TannersSewingKit.server.getPlayerManager();
         ServerPlayerEntity fromPlayer = playerManager.getPlayer(from);
         ServerPlayerEntity toPlayer = playerManager.getPlayer(to);
+
+        BackCommand.setLastLocation(fromPlayer);
 
         fromPlayer.sendMessage(new LiteralText("Teleporting...").formatted(Formatting.GOLD), false);
 

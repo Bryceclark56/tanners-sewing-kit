@@ -20,6 +20,7 @@ public class Commands {
             HomeCommand.register(dispatcher);
             FunCommand.register(dispatcher);
             GenChunksCommand.register(dispatcher);
+            BackCommand.register(dispatcher);
         });
     }
 }

@@ -3,12 +3,16 @@ package me.bc56.tanners_sewing_kit.mixin;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 
+import me.bc56.tanners_sewing_kit.common.PlayerLocation;
 import me.bc56.tanners_sewing_kit.tpa.PlayerTeleportRequest;
 import me.bc56.tanners_sewing_kit.tpa.TeleportMixinAccess;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 @Mixin(ServerPlayerEntity.class)
 public class TeleportMixin implements TeleportMixinAccess {
+    @Unique
+    private PlayerLocation lastLocation;
+
     @Unique
     private PlayerTeleportRequest lastOutgoingRequest;
 
@@ -33,5 +37,13 @@ public class TeleportMixin implements TeleportMixinAccess {
     @Override
     public void setOutgoingRequest(PlayerTeleportRequest request) {
         lastOutgoingRequest = request;
+    }
+
+    public PlayerLocation getLastLocation() {
+        return lastLocation;
+    }
+    
+    public void setLastLocation(PlayerLocation location) {
+        lastLocation = location;
     }
 }

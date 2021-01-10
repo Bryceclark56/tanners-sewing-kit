@@ -4,9 +4,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import me.bc56.tanners_sewing_kit.command.Commands;
+import me.bc56.tanners_sewing_kit.common.PlayerLocation;
 import me.bc56.tanners_sewing_kit.homes.HomeManager;
 import me.bc56.tanners_sewing_kit.sleep.SleepyBois;
+import me.bc56.tanners_sewing_kit.tpa.TeleportMixinAccess;
 import net.fabricmc.api.DedicatedServerModInitializer;
+import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.minecraft.server.MinecraftServer;
 
@@ -23,6 +26,11 @@ public class TannersSewingKit implements DedicatedServerModInitializer {
 
         ServerLifecycleEvents.SERVER_STARTING.register(server -> {
             TannersSewingKit.server = server;
+        });
+
+        ServerPlayerEvents.AFTER_RESPAWN.register((oldPlayer, newPlayer, alive) -> {
+            PlayerLocation location = new PlayerLocation(oldPlayer.getServerWorld(), oldPlayer.getX(), oldPlayer.getY(), oldPlayer.getZ());
+            ((TeleportMixinAccess)newPlayer).setLastLocation(location);
         });
 
         HomeManager.initialize();
