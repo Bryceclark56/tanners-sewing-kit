@@ -21,7 +21,7 @@ public class PlayerHome {
     }
 
     // Creates a PlayerHome at the specified player's current location
-    public static PlayerHome createAt(ServerPlayerEntity player) {
+    public static PlayerHome here(ServerPlayerEntity player) {
         return new PlayerHome(player.getServerWorld(), player.getX(), player.getY(), player.getZ(), player.getYaw(1.0F), player.getPitch(1.0F));
     }
 }

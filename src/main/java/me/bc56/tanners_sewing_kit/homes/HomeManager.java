@@ -105,7 +105,7 @@ public class HomeManager {
                             .formatted(Formatting.RED))).create();
         }
 
-        PlayerHome newHome = PlayerHome.createAt(player);
+        PlayerHome newHome = PlayerHome.here(player);
         homes.put(homeName, newHome);
 
         // Only show name if not default home
