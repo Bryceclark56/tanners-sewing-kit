@@ -43,6 +43,7 @@ public class HomeManager {
                                                                                                        // capacity of 16
 
     public static void initialize() {
+        // When a player connects
         ServerPlayConnectionEvents.INIT.register((handler, server) -> {
             ServerPlayerEntity player = handler.player;
             saveLockMap.put(player, new ReentrantReadWriteLock());
@@ -52,7 +53,8 @@ public class HomeManager {
                 Future<Map<String, PlayerHome>> future = ThreadManager.EXECUTOR.submit(() -> readHomes(player));
                 homes = future.get();
             } catch (InterruptedException | ExecutionException e) {
-                LOGGER.error("Unable to load homes from file of player: {}", player.getName().asString(), e);
+                LOGGER.error("Unable to load homes of player: {}", player.getName().asString(), e);
+                handler.disconnect(new LiteralText("Unable to load homes from file.\nPlease reconnect."));
                 return;
             }
 
