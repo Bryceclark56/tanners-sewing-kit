@@ -34,6 +34,7 @@ public class BackCommand {
         ChunkPos chunkPos = new ChunkPos(new BlockPos(lastPos.x, lastPos.y, lastPos.z));
         lastPos.dimension.getChunkManager().addTicket(ChunkTicketType.POST_TELEPORT, chunkPos, 1, player.getEntityId());
         player.teleport(lastPos.dimension, lastPos.x, lastPos.y, lastPos.z, player.getYaw(1.0F), player.getPitch(1.0F));
+        player.networkHandler.syncWithPlayerPosition();
 
         ((TeleportMixinAccess)player).setLastLocation(null);
 
