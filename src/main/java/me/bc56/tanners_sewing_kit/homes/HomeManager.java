@@ -44,7 +44,7 @@ public class HomeManager {
     public static final String DEFAULT_HOME_NAME = "home";
     public static final String DEFAULT_FOLDER_NAME = "playerhomes";
 
-    public static final Map<ServerPlayerEntity, ReentrantReadWriteLock> LOCK_MAP = new HashMap<>(); // Default
+    public static final Map<ServerPlayerEntity, ReentrantReadWriteLock> LOCKS = new HashMap<>(); // Default
                                                                                                     // capacity of 16
 
     public static final Gson GSON = new GsonBuilder()
@@ -56,7 +56,7 @@ public class HomeManager {
         // When a player connects
         ServerPlayConnectionEvents.INIT.register((handler, server) -> {
             ServerPlayerEntity player = handler.player;
-            LOCK_MAP.put(player, new ReentrantReadWriteLock());
+            LOCKS.put(player, new ReentrantReadWriteLock());
 
             Map<String, PlayerHome> homes = null;
             try {
@@ -74,7 +74,7 @@ public class HomeManager {
         });
 
         ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
-            LOCK_MAP.remove(handler.player);
+            LOCKS.remove(handler.player);
         });
 
         ServerPlayerEvents.COPY_FROM.register((oldPlayer, newPlayer, alive) -> {
@@ -83,11 +83,11 @@ public class HomeManager {
             homes.putAll(((HomeMixinAccess) oldPlayer).getHomes());
 
             // Transfer homes save file lock to new player object
-            ReentrantReadWriteLock lock = LOCK_MAP.remove(oldPlayer);
+            ReentrantReadWriteLock lock = LOCKS.remove(oldPlayer);
             if (lock == null) {
                 lock = new ReentrantReadWriteLock();
             }
-            LOCK_MAP.put(newPlayer, lock);
+            LOCKS.put(newPlayer, lock);
         });
     }
 
@@ -169,7 +169,7 @@ public class HomeManager {
         if (homes == null || homes.isEmpty())
             return;
 
-        WriteLock writeLock = LOCK_MAP.get(player).writeLock();
+        WriteLock writeLock = LOCKS.get(player).writeLock();
         writeLock.lock();
 
         Path saveFile = getSaveFile(player);
@@ -185,7 +185,7 @@ public class HomeManager {
     }
 
     public static Map<String, PlayerHome> readHomes(ServerPlayerEntity player) throws IOException {
-        ReadLock readLock = LOCK_MAP.get(player).readLock();
+        ReadLock readLock = LOCKS.get(player).readLock();
         readLock.lock();
 
         Path saveFile = getSaveFile(player);
