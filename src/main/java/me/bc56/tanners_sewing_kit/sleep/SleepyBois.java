@@ -4,7 +4,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import me.bc56.tanners_sewing_kit.TannersSewingKit;
 import me.bc56.tanners_sewing_kit.mixin.ServerWorldSleepMixin;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.network.MessageType;
