@@ -6,6 +6,8 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -31,6 +33,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ChunkTicketType;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.WorldSavePath;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 
@@ -39,6 +42,7 @@ public class HomeManager {
 
     public static final int HOME_LIMIT = 3;
     public static final String DEFAULT_HOME_NAME = "home";
+    public static final String DEFAULT_FOLDER_NAME = "playerhomes";
 
     public static final Map<ServerPlayerEntity, ReentrantReadWriteLock> LOCK_MAP = new HashMap<>(); // Default
                                                                                                        // capacity of 16
@@ -157,7 +161,6 @@ public class HomeManager {
     }
 
     public static void writeHomes(ServerPlayerEntity player) {
-        //TODO: Handle write errors
         Map<String, PlayerHome> homes = ((HomeMixinAccess) player).getHomes();
         if (homes == null || homes.isEmpty()) {
             return;
@@ -171,15 +174,13 @@ public class HomeManager {
         try {
             saveFile.createNewFile();
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error(e);
             lock.writeLock().unlock();
             return;
         }
 
         try(FileWriter writer = new FileWriter(saveFile, false)) {
-            String jsonEncoded = GSON.toJson(homes);
-
-            writer.write(jsonEncoded);
+            writer.write(GSON.toJson(homes));
         } catch (IOException e) {
             LOGGER.error("Unable to save current homes for player {}", player.getName().asString(), e);
         } finally {
@@ -212,10 +213,14 @@ public class HomeManager {
     public static File getSaveFile(ServerPlayerEntity player) {
         MinecraftServer server = player.getServer();
 
-        // TODO: Grab actual world folder name
-        File savePath = server.getFile("world/playerdata/playerhomes/");
-        savePath.mkdirs(); // Ensures folders exist to prevent exception
-        File saveFile =  savePath.toPath().resolve(player.getUuidAsString() + ".json").toFile();
+        Path saveFolder = server.getSavePath(WorldSavePath.PLAYERDATA).resolve(DEFAULT_FOLDER_NAME);
+        try {
+            Files.createDirectory(saveFolder);
+        } catch (IOException e) {
+            LOGGER.error("Unable to create directory for saving player homes", e);
+        }
+
+        File saveFile = saveFolder.resolve(player.getUuidAsString() + ".json").toFile();
 
         return saveFile;
     }
