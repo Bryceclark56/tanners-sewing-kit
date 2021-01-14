@@ -56,7 +56,7 @@ public class HomeCommand {
             .executes(HomeCommand::listHomes)
             .build();
 
-        LiteralCommandNode homes = dispatcher.register(literal("homes").executes(HomeCommand::listHomes));
+        LiteralCommandNode<ServerCommandSource> homes = dispatcher.register(literal("homes").executes(HomeCommand::listHomes));
 
         homes.addChild(setHome);
         homes.addChild(removeHome);
