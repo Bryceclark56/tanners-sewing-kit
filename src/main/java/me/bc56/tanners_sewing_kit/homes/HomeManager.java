@@ -99,7 +99,7 @@ public class HomeManager {
         Map<String, PlayerHome> homes = ((HomeMixinAccess) player).getHomes();
         homeName = homeName.toLowerCase();
 
-        if (((HomeMixinAccess) player).getHomes().size() >= HOME_LIMIT && !homes.containsKey(homeName)) {
+        if (homes.size() >= HOME_LIMIT && !homes.containsKey(homeName)) {
             throw (new SimpleCommandExceptionType(
                     new LiteralText("You have reached the limit of how many homes you may have. (" + HOME_LIMIT + ")")
                             .formatted(Formatting.RED))).create();
@@ -113,7 +113,7 @@ public class HomeManager {
             player.sendMessage(new LiteralText("Home set").formatted(Formatting.GOLD), false);
         } else {
             player.sendMessage(new LiteralText("Home ").formatted(Formatting.GOLD)
-                    .append(new LiteralText(homeName).formatted(Formatting.RESET).formatted(Formatting.WHITE))
+                    .append(new LiteralText(homeName).formatted(Formatting.WHITE))
                     .append(new LiteralText(" set").formatted(Formatting.GOLD)), false);
         }
 
