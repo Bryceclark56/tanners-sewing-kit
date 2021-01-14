@@ -36,37 +36,40 @@ import net.minecraft.util.math.ChunkPos;
 
 public class HomeManager {
     public static final Logger LOGGER = LogManager.getLogger();
+
     public static final int HOME_LIMIT = 3;
     public static final String DEFAULT_HOME_NAME = "home";
 
-    public static final Map<ServerPlayerEntity, ReentrantReadWriteLock> saveLockMap = new HashMap<>(); // Default
+    public static final Map<ServerPlayerEntity, ReentrantReadWriteLock> LOCK_MAP = new HashMap<>(); // Default
                                                                                                        // capacity of 16
+
+    public static final Gson GSON = new GsonBuilder()
+                                    .setPrettyPrinting()
+                                    .registerTypeAdapter(PlayerHome.class, new PlayerHomeTypeAdapter())
+                                    .create();
 
     public static void initialize() {
         // When a player connects
         ServerPlayConnectionEvents.INIT.register((handler, server) -> {
             ServerPlayerEntity player = handler.player;
-            saveLockMap.put(player, new ReentrantReadWriteLock());
+            LOCK_MAP.put(player, new ReentrantReadWriteLock());
 
             Map<String, PlayerHome> homes = null;
             try {
-                Future<Map<String, PlayerHome>> future = ThreadManager.EXECUTOR.submit(() -> readHomes(player));
-                homes = future.get();
-            } catch (InterruptedException | ExecutionException e) {
-                LOGGER.error("Unable to load homes of player: {}", player.getName().asString(), e);
-                handler.disconnect(new LiteralText("Unable to load homes from file.\nPlease reconnect."));
+                homes = readHomes(player);
+            } catch (FileNotFoundException e) {
+                // This is expected for a player's first connection to the server
+                return;
+            } catch (IOException e) {
+                handler.disconnect(new LiteralText("Unable to load homes from file. Please reconnect or contact an admin."));
                 return;
             }
-
-            if (homes == null) return; // TODO: Better confirmation of no pre-existing homes
 
             ((HomeMixinAccess) player).getHomes().putAll(homes);
         });
 
         ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
-            ServerPlayerEntity player = handler.player;
-
-            saveLockMap.remove(player);
+            LOCK_MAP.remove(handler.player);
         });
 
         ServerPlayerEvents.COPY_FROM.register((oldPlayer, newPlayer, alive) -> {
@@ -75,11 +78,11 @@ public class HomeManager {
             homes.putAll(((HomeMixinAccess) oldPlayer).getHomes());
 
             // Transfer homes save file lock to new player object
-            ReentrantReadWriteLock lock = saveLockMap.remove(oldPlayer);
+            ReentrantReadWriteLock lock = LOCK_MAP.remove(oldPlayer);
             if (lock == null) {
                 lock = new ReentrantReadWriteLock();
             }
-            saveLockMap.put(newPlayer, lock);
+            LOCK_MAP.put(newPlayer, lock);
         });
     }
 
@@ -92,7 +95,9 @@ public class HomeManager {
         homeName = homeName.toLowerCase();
 
         if (((HomeMixinAccess)player).getHomes().size() >= HOME_LIMIT && !homes.containsKey(homeName)) {
-            throw new SimpleCommandExceptionType(new LiteralText("You have reached the limit of how many homes you may have. (" + HOME_LIMIT + ")").formatted(Formatting.RED)).create();
+            throw (new SimpleCommandExceptionType(
+                new LiteralText("You have reached the limit of how many homes you may have. (" + HOME_LIMIT + ")").formatted(Formatting.RED)
+            )).create();
         }
 
         PlayerHome newHome = PlayerHome.createAt(player);
@@ -152,15 +157,14 @@ public class HomeManager {
     }
 
     public static void writeHomes(ServerPlayerEntity player) {
-        ReentrantReadWriteLock lock = saveLockMap.get(player);
-        lock.writeLock().lock();
-
+        //TODO: Handle write errors
         Map<String, PlayerHome> homes = ((HomeMixinAccess) player).getHomes();
-
         if (homes == null || homes.isEmpty()) {
-            lock.writeLock().unlock();
             return;
         };
+
+        ReentrantReadWriteLock lock = LOCK_MAP.get(player);
+        lock.writeLock().lock();
 
         File saveFile = getSaveFile(player);
 
@@ -172,53 +176,36 @@ public class HomeManager {
             return;
         }
 
-        Gson gson = new GsonBuilder()
-                        .setPrettyPrinting()
-                        .registerTypeAdapter(PlayerHome.class, new PlayerHomeTypeAdapter())
-                        .create();
-
         try(FileWriter writer = new FileWriter(saveFile, false)) {
-
-            String jsonEncoded = gson.toJson(homes);
+            String jsonEncoded = GSON.toJson(homes);
 
             writer.write(jsonEncoded);
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("Unable to save current homes for player {}", player.getName().asString(), e);
         } finally {
             lock.writeLock().unlock();
         }
     }
 
-    public static Map<String, PlayerHome> readHomes(ServerPlayerEntity player) {
-        ReentrantReadWriteLock lock = saveLockMap.get(player);
+    public static Map<String, PlayerHome> readHomes(ServerPlayerEntity player) throws IOException {
+        ReentrantReadWriteLock lock = LOCK_MAP.get(player);
         lock.readLock().lock();
 
         File saveFile = getSaveFile(player);
+        Map<String, PlayerHome> map = null;
 
-        if (!saveFile.exists()) {
-            lock.readLock().unlock();
-            return null; // TODO: Throw custom exception instead
-        }
-
-        FileReader reader = null;
-        try {
-            reader = new FileReader(saveFile);
+        try(FileReader reader = new FileReader(saveFile)) {
+            Type homeMapType = new TypeToken<LinkedHashMap<String, PlayerHome>>(){}.getType();
+            map = GSON.fromJson(new JsonReader(reader), homeMapType);
         } catch (FileNotFoundException e) {
-            // Hopefully this doesn't happen
-            e.printStackTrace();
-
+            throw e;
+        } catch (IOException e) {
+            LOGGER.error("Problem reading homes file for player: {}", player.getName().asString(), e);
+            throw e;
+        } finally {
             lock.readLock().unlock();
-            return null;
         }
 
-        Gson gson = new GsonBuilder()
-            .registerTypeAdapter(PlayerHome.class, new PlayerHomeTypeAdapter())
-            .create();
-
-        Type homeMapType = new TypeToken<LinkedHashMap<String, PlayerHome>>(){}.getType();
-
-        Map<String, PlayerHome> map = gson.fromJson(new JsonReader(reader), homeMapType);
-        lock.readLock().unlock();
         return map;
     }
 
