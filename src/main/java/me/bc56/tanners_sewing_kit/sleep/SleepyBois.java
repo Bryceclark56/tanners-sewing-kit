@@ -1,6 +1,7 @@
 package me.bc56.tanners_sewing_kit.sleep;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -17,47 +18,51 @@ import net.minecraft.util.Util;
 import net.minecraft.world.GameRules;
 
 public class SleepyBois {
+    // Minimum percentage of players that must be sleeping
     public static final double GOAL_PERCENT = 0.5;
 
-    public static Set<ServerPlayerEntity> existingSleepyBois = new HashSet<>();
+    public static Set<ServerPlayerEntity> previouslySleeping = new HashSet<>(10);
 
     public static void initialize() {
+        //TODO: Deal with possible sleeping on multiple worlds
+        // Not an issue on most vanilla servers, but still possible
         ServerTickEvents.START_WORLD_TICK.register(world -> {
-            if (!world.getDimension().isBedWorking())
-                return;
-
-            if (world.getPlayers().isEmpty()) {
+            if (!world.getDimension().isBedWorking()) {
                 return;
             }
 
-            Set<ServerPlayerEntity> playersSleeping = world.getPlayers().stream().filter(p -> p.isSleepingLongEnough())
+            List<ServerPlayerEntity> players = world.getPlayers();
+
+            if (players.isEmpty()) {
+                return;
+            }
+
+            Set<ServerPlayerEntity> currentlySleeping = players.stream().filter(p -> p.isSleepingLongEnough())
                     .collect(Collectors.toSet());
 
-            int goal = (int)Math.ceil(world.getServer().getCurrentPlayerCount() * GOAL_PERCENT);
+            // Minimum number of players that must be sleeping
+            int goal = (int)Math.ceil(players.size() * GOAL_PERCENT);
 
-            // Remove anyone not actively sleeping from existing sleepers set
-            Set<ServerPlayerEntity> difference = new HashSet<>(existingSleepyBois);
-            difference.removeAll(playersSleeping);
-            existingSleepyBois.removeAll(difference);
+            // Remove anyone not actively sleeping from previouslySleeping
+            previouslySleeping.retainAll(currentlySleeping);
 
-            playersSleeping.stream().filter(p -> !existingSleepyBois.contains(p)).forEach(p -> {
-                existingSleepyBois.add(p);
-
-                MinecraftServer server = p.getServer();
+            MinecraftServer server = world.getServer();
+            currentlySleeping.stream().filter(p -> !previouslySleeping.contains(p)).forEach(p -> {
+                previouslySleeping.add(p);
 
                 MutableText playerNameText = new LiteralText(p.getName().getString()).formatted(Formatting.WHITE);
-                MutableText baseMessage = new LiteralText(" is now sleeping. (" + existingSleepyBois.size() + "/" + goal + ")").formatted(Formatting.GREEN);
+                MutableText baseMessage = new LiteralText(" is now sleeping. (" + previouslySleeping.size() + "/" + goal + ")").formatted(Formatting.GREEN);
 
                 server.getPlayerManager().broadcastChatMessage(playerNameText.append(baseMessage), MessageType.CHAT, Util.NIL_UUID);
             });
 
-            if (existingSleepyBois.size() >= goal) {
+            if (previouslySleeping.size() >= goal) {
                 if (world.getGameRules().getBoolean(GameRules.DO_DAYLIGHT_CYCLE)) {
                     long l = world.getLevelProperties().getTimeOfDay() + 24000L;
                     world.setTimeOfDay(l - l % 24000L);
                 }
-        
-                playersSleeping.stream().forEach(p -> {
+
+                players.forEach(p -> {
                     p.resetStat(Stats.CUSTOM.getOrCreateStat(Stats.TIME_SINCE_REST));
                     p.wakeUp();
                 });
@@ -66,7 +71,7 @@ public class SleepyBois {
                     ((ServerWorldSleepMixin)world).invokeResetWeather();
                 }
                 
-                existingSleepyBois.clear();
+                previouslySleeping.clear();
             }
         });
     }
